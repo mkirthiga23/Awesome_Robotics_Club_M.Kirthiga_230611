@@ -1,0 +1,16 @@
+import cv2
+
+# Read the salt-and-pepper image
+image = cv2.imread('salt_and_pepper_image.png')
+
+# Convert the image to grayscale
+gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+# Apply median filter to remove noise
+filtered_image = cv2.medianBlur(gray_image, 5)  # Kernel size is 5x5, adjust as needed
+
+# Display the original and filtered images
+cv2.imshow('Original Image', image)
+cv2.imshow('Filtered Image', filtered_image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()

@@ -1,0 +1,80 @@
+We can utilize pathfinding algorithms like Dijkstra's or A* to find the shortest path while avoiding blue cells. After finding the shortest path, we can mark the coordinates of the path on the grid image
+
+import cv2
+import numpy as np
+import heapq
+
+# Define grid size and colors
+grid_size = (5, 5)
+start = (0, 0)
+end = (grid_size[0] - 1, grid_size[1] - 1)
+blue_cells = [(1, 2), (2, 2), (3, 2), (4, 2)]  # Example blue cells
+yellow_color = (0, 255, 255)  # Yellow color
+blue_color = (255, 0, 0)  # Blue color
+
+# Create grid image with blue and yellow cells
+grid_image = np.zeros((grid_size[0] * 50, grid_size[1] * 50, 3), dtype=np.uint8)
+for i in range(grid_size[0]):
+    for j in range(grid_size[1]):
+        if (i, j) in blue_cells:
+            color = blue_color
+        else:
+            color = yellow_color
+        cv2.rectangle(grid_image, (j * 50, i * 50), ((j + 1) * 50, (i + 1) * 50), color, -1)
+
+# Define function to find shortest path using Dijkstra's algorithm
+def dijkstra(grid, start, end):
+    pq = [(0, start)]
+    visited = set()
+    distances = {start: 0}
+    prev = {}
+
+    while pq:
+        dist, current = heapq.heappop(pq)
+        if current == end:
+            break
+        if current in visited:
+            continue
+        visited.add(current)
+
+        neighbors = get_neighbors(grid, current)
+        for neighbor in neighbors:
+            if neighbor in visited:
+                continue
+            new_dist = dist + 1  # Distance between adjacent cells is 1
+            if new_dist < distances.get(neighbor, float('inf')):
+                distances[neighbor] = new_dist
+                prev[neighbor] = current
+                heapq.heappush(pq, (new_dist, neighbor))
+
+    # Reconstruct shortest path
+    path = []
+    current = end
+    while current in prev:
+        path.append(current)
+        current = prev[current]
+    path.append(start)
+    return path[::-1]
+
+# Define function to get valid neighbors
+def get_neighbors(grid, cell):
+    neighbors = []
+    for dr, dc in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+        r, c = cell[0] + dr, cell[1] + dc
+        if 0 <= r < grid_size[0] and 0 <= c < grid_size[1] and grid[r][c] != blue_color:
+            neighbors.append((r, c))
+    return neighbors
+
+# Find shortest path
+grid = np.all(grid_image == yellow_color, axis=2)
+shortest_path = dijkstra(grid, start, end)
+
+# Mark shortest path on the grid image
+for cell in shortest_path:
+    cv2.circle(grid_image, ((cell[1] * 50) + 25, (cell[0] * 50) + 25), 10, (0, 0, 255), -1)
+
+# Display the grid image with the shortest path
+cv2.imshow('Shortest Path', grid_image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
